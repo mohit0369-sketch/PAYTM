@@ -1,0 +1,52 @@
+KYC MERCHANT ONBOARDING SOP
+
+Purpose:
+This policy defines the minimum requirements for merchant KYC onboarding and how incomplete, risky, and ambiguous cases should be handled.
+
+Required Documents:
+1. Identity Proof
+2. Address Proof
+3. Business Proof
+
+Normal Incomplete Case:
+- One or more required documents are missing.
+- No risk flag is present.
+- The case can receive an automated follow-up requesting the missing documents.
+
+High-Risk Case:
+A case is considered high-risk when:
+- A risk flag is explicitly present.
+- There is a repeated failed resubmission.
+- There is a name or identity mismatch.
+- There is suspicious or conflicting information.
+
+Handling Rules:
+1. If required documents are missing and there is no risk flag:
+   - Send a follow-up to the merchant.
+   - Ask specifically for the missing documents.
+   - Do not escalate unless a risk issue appears.
+
+2. If a risk flag is present:
+   - Do not automatically approve or close the case.
+   - Do not make a final decision about the merchant.
+   - Escalate the case to a human reviewer.
+   - Include the risk flag and missing documents in the escalation.
+
+3. If the information is ambiguous or conflicting:
+   - Do not guess.
+   - Escalate to a human reviewer.
+
+Verification:
+After a merchant submits missing documents:
+- Check whether the previously missing documents are now present.
+- If all required documents are present and no risk issue exists:
+  mark the case as ready for closure.
+- If documents are still missing:
+  continue the follow-up process.
+- If a risk issue appears:
+  escalate to a human reviewer.
+
+Important:
+The AI must use this policy as its source of truth.
+The AI must not invent KYC requirements.
+Risky or ambiguous cases must be escalated rather than automatically resolved.
