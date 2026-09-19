@@ -1,0 +1,1189 @@
+{
+  "name": "KYC Onboarding Chase Agent",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "81a91867-6916-4d69-b964-3913d7b5370a",
+      "name": "Start",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1aYok7b68Ja72Plcr8ryXiGO4nEcmQcFBdKdu1jBv4wM",
+          "mode": "list",
+          "cachedResultName": "KYC Merchant Cases",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1aYok7b68Ja72Plcr8ryXiGO4nEcmQcFBdKdu1jBv4wM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "1cda43f1-a955-482f-8bf7-06cf5a42b18b",
+      "name": "Read Merchant Cases",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        448,
+        96
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "f9TevqObt1BFqegm",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "is-pending",
+              "leftValue": "={{ $json.Status }}",
+              "rightValue": "Pending",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d19b9bcb-74a9-426a-9993-2a281b8c2d74",
+      "name": "Only Pending Cases",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        672,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "risk-not-empty",
+              "leftValue": "={{ ($json.Risk_Flag || \"\").toString().trim() }}",
+              "rightValue": "value1",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ae250cbc-3016-40e7-8c5a-59b464276f9e",
+      "name": "Risk Flag Present?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1504,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "Follow_Up_Status",
+              "value": "Escalated - Human Review Required",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "Follow_Up_Message",
+              "value": "=Case {{ $('Only Pending Cases').item.json.Case_ID }} ({{ $('Only Pending Cases').item.json.Merchant_Name }}) has risk flag \"{{ $('Only Pending Cases').item.json.Risk_Flag }}\" and requires manual review. Missing documents: {{ $('Only Pending Cases').item.json.Documents_Missing }}.",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "62f00f29-c809-41dd-8202-051bb807dc68",
+      "name": "Route For Human Review",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1728,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1aYok7b68Ja72Plcr8ryXiGO4nEcmQcFBdKdu1jBv4wM",
+          "mode": "list",
+          "cachedResultName": "KYC Merchant Cases",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1aYok7b68Ja72Plcr8ryXiGO4nEcmQcFBdKdu1jBv4wM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Case_ID": "={{ $('Only Pending Cases').item.json.Case_ID }}",
+            "Status": "Escalated",
+            "Follow_Up_Sent": "Yes"
+          },
+          "matchingColumns": [
+            "Case_ID"
+          ],
+          "schema": [
+            {
+              "id": "Case_ID",
+              "displayName": "Case_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Merchant_Name",
+              "displayName": "Merchant_Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Documents_Submitted",
+              "displayName": "Documents_Submitted",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Documents_Missing",
+              "displayName": "Documents_Missing",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Risk_Flag",
+              "displayName": "Risk_Flag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "SLA_Deadline",
+              "displayName": "SLA_Deadline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Follow_Up_Sent",
+              "displayName": "Follow_Up_Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "df537bf9-286f-4c4e-aab2-a423cc26c1cb",
+      "name": "Update Sheet (Review)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1952,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "f9TevqObt1BFqegm",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b1",
+              "name": "Follow_Up_Status",
+              "value": "Follow-up Sent",
+              "type": "string"
+            },
+            {
+              "id": "b2",
+              "name": "Follow_Up_Message",
+              "value": "=Hi {{ $('Only Pending Cases').item.json.Merchant_Name }}, to continue your onboarding for case {{ $('Only Pending Cases').item.json.Case_ID }} please provide the following missing document(s): {{ $('Only Pending Cases').item.json.Documents_Missing }}. Thank you.",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "ee39572d-ef55-4ad4-935d-8152e1136a36",
+      "name": "Generate Follow-up Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1728,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1aYok7b68Ja72Plcr8ryXiGO4nEcmQcFBdKdu1jBv4wM",
+          "mode": "list",
+          "cachedResultName": "KYC Merchant Cases",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1aYok7b68Ja72Plcr8ryXiGO4nEcmQcFBdKdu1jBv4wM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Case_ID": "={{ $json.Case_ID }}",
+            "Follow_Up_Sent": "Yes"
+          },
+          "matchingColumns": [
+            "Case_ID"
+          ],
+          "schema": [
+            {
+              "id": "Case_ID",
+              "displayName": "Case_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Merchant_Name",
+              "displayName": "Merchant_Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Documents_Submitted",
+              "displayName": "Documents_Submitted",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Documents_Missing",
+              "displayName": "Documents_Missing",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Risk_Flag",
+              "displayName": "Risk_Flag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "SLA_Deadline",
+              "displayName": "SLA_Deadline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Follow_Up_Sent",
+              "displayName": "Follow_Up_Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "a18e4b42-ffdb-4af4-baca-51fd8a9574db",
+      "name": "Update Sheet (Follow-up)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1952,
+        192
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "f9TevqObt1BFqegm",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": ""
+      },
+      "id": "2799c690-ae7c-489b-85b1-11641d62963c",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1664,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": ""
+      },
+      "id": "33c8ef6a-82cb-489f-a01f-f78bc3000bd8",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1664,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        224,
+        96
+      ],
+      "id": "add59c87-66ac-4b9c-a79f-ae6b251aa64d",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://tenant-64ab82fd-88e3-4b1c-a5cb-1c49dc3ab37e.aws.cognee.ai/api/v1/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"searchType\": \"HYBRID_COMPLETION\",\n  \"datasets\": [\"kyc\"],\n  \"query\": \"What should be done when a merchant has missing documents and a risk flag?\",\n  \"topK\": 5,\n  \"onlyContext\": true,\n  \"includeReferences\": true\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        896,
+        96
+      ],
+      "id": "ca00f537-f6e6-4d8b-9faa-1851416069be",
+      "name": "Query Cognee Policy",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "WU35qDeRgK6HCcIK",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Return ONLY valid JSON in this format:\n{\n  \"case_id\": \"merchant Case_ID\",\n  \"action\": \"FOLLOW_UP | ESCALATE | CLOSE\",\n  \"reason\": \"brief reason based on the policy\"\n}"
+            },
+            {
+              "content": "=KYC POLICY CONTEXT FROM COGNEE:\n{{ JSON.stringify($node[\"Query Cognee Policy\"].json) }}\n\nMERCHANT CASE:\nCase ID: {{ $node[\"Only Pending Cases\"].json.Case_ID }}\nMerchant Name: {{ $node[\"Only Pending Cases\"].json.Merchant_Name }}\nDocuments Submitted: {{ $node[\"Only Pending Cases\"].json.Documents_Submitted }}\nDocuments Missing: {{ $node[\"Only Pending Cases\"].json.Documents_Missing }}\nStatus: {{ $node[\"Only Pending Cases\"].json.Status }}\nRisk Flag: {{ $node[\"Only Pending Cases\"].json.Risk_Flag }}\nSLA Deadline: {{ $node[\"Only Pending Cases\"].json.SLA_Deadline }}\n\nBased on the KYC policy context and this merchant case, decide the correct action.\n\nReturn ONLY valid JSON in this exact format:\n{\n  \"case_id\": \"{{ $node[\"Only Pending Cases\"].json.Case_ID }}\",\n  \"action\": \"FOLLOW_UP | ESCALATE | CLOSE\",\n  \"reason\": \"brief reason based on the policy\"\n}\n\nReturn the Case_ID exactly as provided above."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        1120,
+        96
+      ],
+      "id": "06f47195-24df-46a0-a502-af849a31c975",
+      "name": "AI KYC Decision",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ JSON.parse($json.output[0].content[0].text).action }}",
+                    "rightValue": "FOLLOW_UP",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "ffdee3d1-fabe-43bc-a606-dbb076a5bb2c"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "03fbe467-39c0-4206-b470-466479c0fcd2",
+                    "leftValue": "={{ JSON.parse($json.output[0].content[0].text).action }}",
+                    "rightValue": "ESCALATE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1552,
+        368
+      ],
+      "id": "a3c26bad-1375-4184-9e68-b559adb92623",
+      "name": "AI Decision"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1aYok7b68Ja72Plcr8ryXiGO4nEcmQcFBdKdu1jBv4wM",
+          "mode": "list",
+          "cachedResultName": "KYC Merchant Cases",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1aYok7b68Ja72Plcr8ryXiGO4nEcmQcFBdKdu1jBv4wM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1aYok7b68Ja72Plcr8ryXiGO4nEcmQcFBdKdu1jBv4wM/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Case_ID": "KYC009",
+            "Status": "Escalated"
+          },
+          "matchingColumns": [
+            "Case_ID"
+          ],
+          "schema": [
+            {
+              "id": "Case_ID",
+              "displayName": "Case_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Merchant_Name",
+              "displayName": "Merchant_Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Documents_Submitted",
+              "displayName": "Documents_Submitted",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Documents_Missing",
+              "displayName": "Documents_Missing",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Risk_Flag",
+              "displayName": "Risk_Flag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "SLA_Deadline",
+              "displayName": "SLA_Deadline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Follow_Up_Sent",
+              "displayName": "Follow_Up_Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1840,
+        -160
+      ],
+      "id": "da4be4af-b82e-495e-8ad9-fc66cb7ae09d",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "DFs5sYWHSBYdxrg1",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        464,
+        960
+      ],
+      "id": "f359e353-ea39-4a9b-824f-4afd1fdb4a89",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1aYok7b68Ja72Plcr8ryXiGO4nEcmQcFBdKdu1jBv4wM",
+          "mode": "list",
+          "cachedResultName": "KYC Merchant Cases",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1aYok7b68Ja72Plcr8ryXiGO4nEcmQcFBdKdu1jBv4wM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1aYok7b68Ja72Plcr8ryXiGO4nEcmQcFBdKdu1jBv4wM/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Follow_Up_Sent",
+              "lookupValue": "Yes"
+            },
+            {
+              "lookupColumn": "Status",
+              "lookupValue": "Pending"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        688,
+        960
+      ],
+      "id": "94cdc2f8-a88b-455f-ab02-b480320f16f1",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "f9TevqObt1BFqegm",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d0aeb14a-af03-4c3a-8244-18de7b41c17f",
+              "leftValue": "={{ $json.Documents_Missing }}",
+              "rightValue": "None",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        912,
+        960
+      ],
+      "id": "c0c70759-fc13-4ff3-87f3-c21acc0964bc",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1aYok7b68Ja72Plcr8ryXiGO4nEcmQcFBdKdu1jBv4wM",
+          "mode": "list",
+          "cachedResultName": "KYC Merchant Cases",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1aYok7b68Ja72Plcr8ryXiGO4nEcmQcFBdKdu1jBv4wM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1aYok7b68Ja72Plcr8ryXiGO4nEcmQcFBdKdu1jBv4wM/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Case_ID": "={{ $json.Case_ID }}",
+            "Status": "Closed"
+          },
+          "matchingColumns": [
+            "Case_ID"
+          ],
+          "schema": [
+            {
+              "id": "Case_ID",
+              "displayName": "Case_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Merchant_Name",
+              "displayName": "Merchant_Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Documents_Submitted",
+              "displayName": "Documents_Submitted",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Documents_Missing",
+              "displayName": "Documents_Missing",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Risk_Flag",
+              "displayName": "Risk_Flag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "SLA_Deadline",
+              "displayName": "SLA_Deadline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Follow_Up_Sent",
+              "displayName": "Follow_Up_Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1136,
+        864
+      ],
+      "id": "367749a8-4f10-43fd-b7e8-d1bb6a7794e0",
+      "name": "Update row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "f9TevqObt1BFqegm",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Read Merchant Cases",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Merchant Cases": {
+      "main": [
+        [
+          {
+            "node": "Only Pending Cases",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Only Pending Cases": {
+      "main": [
+        [
+          {
+            "node": "Query Cognee Policy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Risk Flag Present?": {
+      "main": [
+        [
+          {
+            "node": "Route For Human Review",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate Follow-up Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route For Human Review": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Follow-up Message": {
+      "main": [
+        [
+          {
+            "node": "Update Sheet (Follow-up)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Cognee Policy": {
+      "main": [
+        [
+          {
+            "node": "AI KYC Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI KYC Decision": {
+      "main": [
+        [
+          {
+            "node": "AI Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Decision": {
+      "main": [
+        [
+          {
+            "node": "Risk Flag Present?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Generate Follow-up Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Route For Human Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Update Sheet (Review)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Sheet (Follow-up)": {
+      "main": [
+        []
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "068297b9-634a-40b0-a15d-f8d001521c9e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a5df92dce938b9057e2e57093c5b17dbfec75a14dcba131618cb68dbeaa451a0"
+  },
+  "nodeGroups": [
+    {
+      "id": "2beb7034-c3e5-44a6-bb51-1928745457d7",
+      "name": "Ingest",
+      "nodeIds": [
+        "1cda43f1-a955-482f-8bf7-06cf5a42b18b",
+        "d19b9bcb-74a9-426a-9993-2a281b8c2d74"
+      ],
+      "description": "Read merchant KYC cases from Google Sheets and keep only Pending cases."
+    },
+    {
+      "id": "879f1b38-fb75-4b41-9fd8-54a8e25a6a3e",
+      "name": "Triage & Chase",
+      "nodeIds": [
+        "ae250cbc-3016-40e7-8c5a-59b464276f9e",
+        "62f00f29-c809-41dd-8202-051bb807dc68",
+        "ee39572d-ef55-4ad4-935d-8152e1136a36",
+        "df537bf9-286f-4c4e-aab2-a423cc26c1cb",
+        "a18e4b42-ffdb-4af4-baca-51fd8a9574db",
+        "a3c26bad-1375-4184-9e68-b559adb92623",
+        "da4be4af-b82e-495e-8ad9-fc66cb7ae09d"
+      ],
+      "description": "Escalate risk-flagged cases for human review; generate document chase follow-ups for the rest and write the follow-up status back."
+    }
+  ],
+  "id": "r23WS58j50B8sCQY",
+  "tags": []
+}
