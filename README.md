@@ -1,50 +1,224 @@
-# KYC Chase Agent — Case Dashboard
+# KYC Chase AI — AI Teammate for Merchant KYC Operations
 
-A read-only React dashboard for the KYC Onboarding-Chase Agent hackathon demo.
-It runs entirely on local mock data — it does **not** call your n8n workflow or
-Cognee, so it won't interfere with anything you already have working.
+An AI-powered merchant KYC operations prototype that detects incomplete onboarding cases, retrieves relevant policy using Cognee, decides the next action using a pre-trained LLM, automatically follows up on normal cases, verifies completion, and escalates risky or ambiguous cases to a human reviewer.
 
-## Run it
+**Detect → Decide → Follow Up → Verify → Escalate**
 
+## Problem
+
+Merchant onboarding teams deal with repetitive operational cases:
+
+* Missing KYC documents
+* Repeated follow-ups
+* Cases that remain pending
+* Risk flags and document mismatches
+* Cases requiring human review
+
+Manually checking every pending case is time-consuming and difficult to scale.
+
+## Solution
+
+KYC Chase AI acts as an AI teammate for the operations team.
+
+```text
+Merchant Case
+     ↓
+Google Sheets
+     ↓
+Detect Pending Cases
+     ↓
+Cognee Policy Retrieval
+     ↓
+Pre-trained LLM
+     ↓
+┌───────────┬───────────┬─────────┐
+│ FOLLOW_UP │ ESCALATE  │ CLOSE   │
+└───────────┴───────────┴─────────┘
+      ↓          ↓
+  Merchant     Human
+  Follow-up    Review
+      ↓
+  Verification
+      ↓
+    CLOSE
 ```
+
+## How It Works
+
+### 1. Detect
+
+n8n reads the merchant case queue and identifies pending cases.
+
+### 2. Policy Retrieval
+
+Cognee retrieves the relevant KYC policy context.
+
+The LLM does not invent the KYC requirements; it receives the policy context before making its decision.
+
+### 3. AI Decision
+
+A pre-trained LLM evaluates the merchant case against the retrieved policy and returns one of three actions:
+
+* **FOLLOW_UP** — documents are missing and there is no risk issue.
+* **ESCALATE** — a risk flag, mismatch, ambiguity, or other high-risk condition requires human review.
+* **CLOSE** — all required documents are present and there is no risk issue.
+
+### 4. Automated Action
+
+For a normal incomplete case, n8n generates a personalized follow-up message and updates the case.
+
+### 5. Verification
+
+After the merchant submits the missing documents, the verification workflow checks the case again.
+
+If all required documents are present and there is no risk issue, the case is closed.
+
+### 6. Human Escalation
+
+Risky or ambiguous cases are not automatically approved or closed.
+
+They are routed to a human reviewer with the relevant risk information.
+
+## Example Demo Cases
+
+### Normal Case
+
+```text
+Missing document: Address Proof
+Risk flag: None
+
+        ↓
+
+AI Decision: FOLLOW_UP
+
+        ↓
+
+Merchant receives follow-up
+
+        ↓
+
+Missing document submitted
+
+        ↓
+
+Verification
+
+        ↓
+
+CLOSED
+```
+
+### Risky Case
+
+```text
+Risk flag: Repeated failed resubmission
+
+        ↓
+
+AI Decision: ESCALATE
+
+        ↓
+
+Human Review
+```
+
+## Technology Stack
+
+* **React + Vite** — thin operations dashboard
+* **n8n** — workflow orchestration and automation
+* **Cognee** — policy/knowledge retrieval
+* **Pre-trained LLM** — case reasoning and action selection
+* **Google Sheets** — prototype merchant case queue
+* **GitHub** — source code and workflow versioning
+
+## Repository Structure
+
+```text
+kyc-dashboard/
+├── src/
+│   ├── components/
+│   ├── data/
+│   ├── App.jsx
+│   ├── main.jsx
+│   └── styles.css
+├── policy/
+│   ├── KYC_SOP_Policy.txt
+│   └── kyc_policy.md
+├── kyc-chase-agent-workflow.json
+├── index.html
+├── package.json
+├── package-lock.json
+├── vite.config.js
+└── README.md
+```
+
+## Run the React Dashboard
+
+```bash
 npm install
 npm run dev
 ```
 
-Open the URL Vite prints (usually `http://localhost:5173`).
+Open the local URL shown by Vite, usually:
 
-## What's in it
+```text
+http://localhost:5173
+```
 
-- **Stat bar** — total / pending / complete / escalated, computed live from the case list.
-- **Merchant case table** — 10 mock KYC cases with status, risk, missing documents,
-  and SLA deadline. Click a row to expand the agent's note and submission date.
-  Search by merchant name or case ID, and filter by status.
-- **AI activity panel** — two demo buttons:
-  - **Run normal-case demo** — plays out Detect → Chase → Verify → Close on
-    `MCH-2065` (Copperline Coffee Co.), ending with the case marked Complete.
-  - **Run risky-case demo** — plays out Detect → Assess → Escalate on
-    `MCH-2044` (Orbit Freight Logistics), ending with the case routed to a
-    human reviewer instead of being auto-approved.
+The dashboard uses mock data for the frontend demonstration.
 
-Each demo streams timestamped log entries one at a time and highlights the
-case row being acted on, so it reads clearly on a screen share or projector.
+## n8n Workflow
 
-## Editing the demo data
+The exported workflow is available at:
 
-All mock cases and the activity script live in `src/data/cases.js`. Edit the
-`initialCases` array to change case details, or `activityScript` to change
-what the AI activity panel narrates during each demo.
+```text
+kyc-chase-agent-workflow.json
+```
 
-## Connecting it to n8n later (optional)
+The workflow contains the main KYC decision and automation logic, including policy retrieval, AI decision-making, follow-up, escalation, verification, and Google Sheets updates.
 
-This version is intentionally disconnected so it's safe to demo without
-touching your working workflow. If you want to wire it up afterwards:
+## Policy
 
-1. Replace the static `initialCases` import in `src/App.jsx` with a `fetch`
-   call to an n8n webhook that returns your case data as JSON.
-2. Replace the `runDemo` function's local state updates with a call to an
-   n8n webhook that triggers the real workflow, then poll or subscribe for
-   the resulting status change.
+The KYC policy used by the prototype is available in:
 
-Do this only if time permits — the thin UI already tells the full story on
-its own.
+```text
+policy/kyc_policy.md
+```
+
+The policy defines required documents, normal incomplete cases, high-risk conditions, follow-up rules, escalation rules, and verification behavior.
+
+## Human-in-the-Loop
+
+The system is designed to assist—not replace—the operations team.
+
+Routine and well-defined cases can be automated, while risky, conflicting, or ambiguous cases are routed to humans for review.
+
+## Why This Architecture?
+
+Instead of training a new AI model for every company policy, the prototype separates:
+
+**Reasoning** → pre-trained LLM
+
+**Company policy** → Cognee
+
+**Execution** → n8n
+
+This allows policies to be updated independently from the model and keeps the workflow focused on operational automation.
+
+## Future Extensions
+
+The same architecture can be extended beyond KYC to other operational workflows such as:
+
+* Refund policy handling
+* Merchant disputes
+* Payment issues
+* Compliance workflows
+* Account verification
+
+The core pattern remains:
+
+**Retrieve policy → Reason → Act → Verify → Escalate when necessary**
+
+## Project Goal
+
+KYC Chase AI demonstrates how an AI teammate can continuously monitor operational cases, handle repetitive follow-ups, verify progress, and bring the right exceptions to human reviewers at the right time.
